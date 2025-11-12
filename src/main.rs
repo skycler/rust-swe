@@ -203,7 +203,7 @@ fn main() {
         
         if solver.time >= next_output_time {
             let mass = solver.compute_total_mass();
-            let energy = solver.compute_total_energy();
+            let _energy = solver.compute_total_energy();
             let mass_error = ((mass - initial_mass) / initial_mass * 100.0).abs();
             
             println!("  t = {:.3}s, dt = {:.6}s, steps = {}, mass error = {:.6}%",

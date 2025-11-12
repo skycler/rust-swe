@@ -3,7 +3,6 @@ use std::f64;
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub id: usize,
     pub x: f64,
     pub y: f64,
     pub z: f64,  // Bottom elevation (bathymetry/topography)
@@ -21,7 +20,6 @@ pub struct Triangle {
 
 #[derive(Debug, Clone)]
 pub struct Edge {
-    pub nodes: [usize; 2],
     pub length: f64,
     pub normal: (f64, f64), // Unit normal vector
     pub left_triangle: usize,
@@ -62,12 +60,7 @@ impl TriangularMesh {
                 let y = j as f64 * dy;
                 let z = Self::compute_topography(x, y, topography);
                 
-                nodes.push(Node {
-                    id: j * nx + i,
-                    x,
-                    y,
-                    z,
-                });
+                nodes.push(Node { x, y, z });
             }
         }
         
@@ -195,7 +188,6 @@ impl TriangularMesh {
                     let right_triangle = tri.neighbors[i];
                     
                     edges.push(Edge {
-                        nodes: [n0, n1],
                         length,
                         normal,
                         left_triangle: tri.id,
@@ -206,10 +198,6 @@ impl TriangularMesh {
         }
         
         edges
-    }
-    
-    pub fn is_boundary_edge(&self, edge: &Edge) -> bool {
-        edge.right_triangle.is_none()
     }
     
     /// Compute topography/bathymetry at a given point
