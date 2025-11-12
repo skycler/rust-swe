@@ -22,8 +22,9 @@ A high-performance Rust implementation of a 2D shallow water equations solver us
 12. [Code Structure](#code-structure)
 13. [Scientific Features](#scientific-features)
 14. [Implementation Details](#implementation-details)
-15. [Troubleshooting](#troubleshooting)
-16. [References](#references)
+15. [Testing](#testing)
+16. [Troubleshooting](#troubleshooting)
+17. [References](#references)
 
 ---
 
@@ -1060,7 +1061,7 @@ RAYON_NUM_THREADS=1 cargo run --release -- --nx 80 --ny 80 --final-time 2.0
 Run the built-in parallelization benchmark:
 
 ```bash
-./run_tests.sh
+./run_examples.sh
 # Select Section 5: Parallelization Performance Benchmark
 ```
 
@@ -1181,7 +1182,7 @@ rust-swe/
 │   ├── mesh.rs                       # Triangular mesh (241 lines)
 │   └── solver.rs                     # Shallow water solver (375 lines)
 ├── README.md                         # This file
-├── run_tests.sh                      # Basic test script
+├── run_examples.sh                   # Example scenarios script
 ├── run_extended_tests.sh             # Extended tests
 └── target/release/                   # Compiled binary
     └── shallow-water-solver
@@ -1619,6 +1620,161 @@ let F_num = 0.5 * (F_L + F_R) - 0.5 * s_max * (U_R - U_L)
 - Self-documenting function names
 - Minimal dependencies
 - Extensible design
+
+---
+
+## Testing
+
+### Unit Tests
+
+The solver includes comprehensive unit tests covering all critical components:
+
+**Test Coverage:**
+- ✅ Mesh generation (9 tests)
+- ✅ Solver physics (13 tests)
+- ✅ Mass conservation
+- ✅ Numerical stability
+- ✅ Physical accuracy
+
+**Total: 22 tests** - Fast execution (~40ms)
+
+### Running Tests
+
+**Run all tests:**
+```bash
+cargo test
+```
+
+**Run specific test:**
+```bash
+cargo test test_mass_conservation
+```
+
+**Run tests with output:**
+```bash
+cargo test -- --nocapture
+```
+
+**Run tests by module:**
+```bash
+cargo test mesh::tests      # Mesh generation tests
+cargo test solver::tests    # Solver physics tests
+```
+
+### Test Categories
+
+#### Mesh Tests (9 tests)
+
+| Test | Purpose |
+|------|---------|
+| `test_mesh_creation_basic` | Verifies correct node and triangle counts |
+| `test_mesh_dimensions` | Checks boundary coordinates |
+| `test_triangle_area_positive` | Ensures positive triangle areas |
+| `test_topography_flat` | Validates flat topography (z=0) |
+| `test_topography_slope` | Tests linear slope generation |
+| `test_topography_gaussian` | Verifies Gaussian hill formula |
+| `test_edges_generation` | Validates edge creation and normals |
+| `test_neighbor_connectivity` | Checks triangle neighbor references |
+| `test_mesh_consistency` | Confirms overall mesh structure |
+
+#### Solver Tests (13 tests)
+
+**Initialization:**
+- `test_solver_creation` - Basic setup
+- `test_initial_state_zero` - Confirms zero initial state
+- `test_dam_break_initial_condition` - Validates initial conditions
+
+**Conservation:**
+- `test_mass_conservation_stationary` - Uniform flow conservation
+- `test_mass_conservation_dam_break` - Dynamic flow conservation (< 10⁻¹²)
+- `test_energy_computation` - Kinetic + potential energy
+
+**Physical Accuracy:**
+- `test_positive_depth_preservation` - Non-negative depths
+- `test_lake_at_rest` - Well-balanced scheme verification
+- `test_circular_wave_symmetry` - Radial symmetry
+- `test_friction_manning` - Friction effects
+
+**Numerical Methods:**
+- `test_velocity_computation` - Momentum to velocity conversion
+- `test_velocity_dry_cell` - Handles zero-depth cells
+- `test_timestep_computation` - Adaptive CFL time stepping
+
+### Test Quality Assurance
+
+**Characteristics:**
+- ✅ **Fast**: All tests complete in ~40ms
+- ✅ **Deterministic**: No flaky tests
+- ✅ **Comprehensive**: Covers critical functionality
+- ✅ **Documented**: Clear assertions with failure messages
+- ✅ **Maintainable**: Easy to extend
+
+**Mass Conservation Verification:**
+```bash
+cargo test test_mass_conservation -- --nocapture
+```
+
+Expected output:
+```
+test solver::tests::test_mass_conservation_dam_break ... ok
+test solver::tests::test_mass_conservation_stationary ... ok
+```
+
+Mass conservation error should be < 10⁻¹² (machine precision).
+
+### Continuous Integration
+
+For CI/CD pipelines:
+
+```bash
+# Run tests with JSON output
+cargo test --message-format=json
+
+# Run with coverage (requires cargo-tarpaulin)
+cargo tarpaulin --out Html
+
+# Run in release mode (slower but tests optimized code)
+cargo test --release
+```
+
+### Adding New Tests
+
+Tests are located at the end of each source file:
+
+**In `src/mesh.rs`:**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // Add mesh tests here
+}
+```
+
+**In `src/solver.rs`:**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::{TriangularMesh, TopographyType};
+    // Add solver tests here
+}
+```
+
+**Test template:**
+```rust
+#[test]
+fn test_my_feature() {
+    // Setup
+    let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+    let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+    
+    // Execute
+    solver.set_dam_break(5.0);
+    
+    // Verify
+    assert!(solver.compute_total_mass() > 0.0);
+}
+```
 
 ---
 

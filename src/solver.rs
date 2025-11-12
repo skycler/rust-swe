@@ -416,3 +416,292 @@ impl ShallowWaterSolver {
         total
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::{TriangularMesh, TopographyType};
+
+    #[test]
+    fn test_solver_creation() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        let solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        assert_eq!(solver.time, 0.0);
+        assert_eq!(solver.cfl, 0.45);
+        assert_eq!(solver.state.h.len(), solver.mesh.triangles.len());
+    }
+
+    #[test]
+    fn test_initial_state_zero() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        let solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Initial state should be zero
+        for i in 0..solver.state.h.len() {
+            assert_eq!(solver.state.h[i], 0.0);
+            assert_eq!(solver.state.hu[i], 0.0);
+            assert_eq!(solver.state.hv[i], 0.0);
+        }
+    }
+
+    #[test]
+    fn test_dam_break_initial_condition() {
+        let mesh = TriangularMesh::new_rectangular(10, 10, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        solver.set_dam_break(5.0);
+        
+        // Check that some cells have high water (left side)
+        let left_cells: Vec<_> = solver.mesh.triangles.iter()
+            .enumerate()
+            .filter(|(_, tri)| tri.centroid.0 < 5.0)
+            .map(|(i, _)| i)
+            .collect();
+        
+        for i in left_cells {
+            assert!(solver.state.h[i] > 1.5, "Left side should have high water");
+        }
+        
+        // Check that some cells have low water (right side)
+        let right_cells: Vec<_> = solver.mesh.triangles.iter()
+            .enumerate()
+            .filter(|(_, tri)| tri.centroid.0 > 5.0)
+            .map(|(i, _)| i)
+            .collect();
+        
+        for i in right_cells {
+            assert!(solver.state.h[i] < 1.5, "Right side should have low water");
+        }
+    }
+
+    #[test]
+    fn test_mass_conservation_stationary() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Set uniform water depth
+        for i in 0..solver.state.h.len() {
+            solver.state.h[i] = 1.0;
+        }
+        
+        let initial_mass = solver.compute_total_mass();
+        
+        // Take a few time steps
+        for _ in 0..5 {
+            solver.step();
+        }
+        
+        let final_mass = solver.compute_total_mass();
+        let mass_error = ((final_mass - initial_mass) / initial_mass).abs();
+        
+        // Mass should be conserved to high precision
+        assert!(mass_error < 1e-10, "Mass conservation error: {}", mass_error);
+    }
+
+    #[test]
+    fn test_mass_conservation_dam_break() {
+        let mesh = TriangularMesh::new_rectangular(10, 10, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        solver.set_dam_break(5.0);
+        let initial_mass = solver.compute_total_mass();
+        
+        // Simulate for a short time
+        while solver.time < 0.5 {
+            solver.step();
+        }
+        
+        let final_mass = solver.compute_total_mass();
+        let mass_error = ((final_mass - initial_mass) / initial_mass).abs();
+        
+        // Mass should be conserved to machine precision
+        assert!(mass_error < 1e-12, "Mass conservation error: {}", mass_error);
+    }
+
+    #[test]
+    fn test_positive_depth_preservation() {
+        let mesh = TriangularMesh::new_rectangular(10, 10, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        solver.set_dam_break(5.0); // Dam break
+        
+        // Simulate
+        for _ in 0..20 {
+            solver.step();
+            
+            // Check that all depths are non-negative
+            for i in 0..solver.state.h.len() {
+                assert!(solver.state.h[i] >= 0.0, "Depth should be non-negative");
+            }
+        }
+    }
+
+    #[test]
+    fn test_velocity_computation() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Set state with known velocity
+        solver.state.h[0] = 2.0;
+        solver.state.hu[0] = 4.0; // u = 2.0
+        solver.state.hv[0] = 6.0; // v = 3.0
+        
+        let (u, v) = solver.state.get_velocity(0);
+        assert!((u - 2.0).abs() < 1e-10);
+        assert!((v - 3.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_velocity_dry_cell() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        let solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Dry cell should have zero velocity
+        let (u, v) = solver.state.get_velocity(0);
+        assert_eq!(u, 0.0);
+        assert_eq!(v, 0.0);
+    }
+
+    #[test]
+    fn test_timestep_computation() {
+        let mesh = TriangularMesh::new_rectangular(10, 10, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Set uniform depth
+        for i in 0..solver.state.h.len() {
+            solver.state.h[i] = 1.0;
+        }
+        
+        solver.compute_timestep();
+        
+        // Time step should be positive and reasonable
+        assert!(solver.dt > 0.0);
+        assert!(solver.dt < 1.0); // Should be much smaller than 1 second
+    }
+
+    #[test]
+    fn test_friction_manning() {
+        let mesh = TriangularMesh::new_rectangular(10, 10, 10.0, 10.0, TopographyType::Flat);
+        let mut solver_no_friction = ShallowWaterSolver::new(mesh.clone(), 0.45, FrictionLaw::None);
+        let mut solver_with_friction = ShallowWaterSolver::new(
+            mesh, 0.45, FrictionLaw::Manning { coefficient: 0.03 }
+        );
+        
+        // Set same initial condition
+        solver_no_friction.set_dam_break(5.0);
+        solver_with_friction.set_dam_break(5.0);
+        
+        // Simulate
+        while solver_no_friction.time < 0.5 {
+            solver_no_friction.step();
+        }
+        while solver_with_friction.time < 0.5 {
+            solver_with_friction.step();
+        }
+        
+        // Check that friction affects the solution
+        // (states should be different after simulation)
+        let mut differences = 0;
+        for i in 0..solver_no_friction.state.h.len() {
+            if (solver_no_friction.state.h[i] - solver_with_friction.state.h[i]).abs() > 1e-6 {
+                differences += 1;
+            }
+        }
+        
+        // At least some cells should have different states
+        assert!(differences > 0, "Friction should affect the solution");
+        
+        // Mass should still be conserved for both
+        let mass_no_friction = solver_no_friction.compute_total_mass();
+        let mass_with_friction = solver_with_friction.compute_total_mass();
+        assert!((mass_no_friction - mass_with_friction).abs() < 1e-10,
+                "Both should conserve mass equally");
+    }
+
+    #[test]
+    fn test_lake_at_rest() {
+        // Test well-balanced property: flat water on flat bottom should remain stationary
+        let mesh = TriangularMesh::new_rectangular(10, 10, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Set uniform depth, zero velocity
+        for i in 0..solver.state.h.len() {
+            solver.state.h[i] = 1.0;
+            solver.state.hu[i] = 0.0;
+            solver.state.hv[i] = 0.0;
+        }
+        
+        // Simulate
+        for _ in 0..10 {
+            solver.step();
+            
+            // Velocities should remain zero (or very small)
+            for i in 0..solver.state.hu.len() {
+                assert!(solver.state.hu[i].abs() < 1e-10, "Momentum should remain zero");
+                assert!(solver.state.hv[i].abs() < 1e-10, "Momentum should remain zero");
+            }
+        }
+    }
+
+    #[test]
+    fn test_energy_computation() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        // Set known state
+        solver.state.h[0] = 2.0;
+        solver.state.hu[0] = 4.0; // u = 2.0
+        solver.state.hv[0] = 0.0;
+        
+        let area = solver.mesh.triangles[0].area;
+        
+        // Expected energy: KE + PE = 0.5*h*u^2 + 0.5*g*h^2
+        let expected_kinetic = 0.5 * 2.0 * 2.0 * 2.0;
+        let expected_potential = 0.5 * G * 2.0 * 2.0;
+        let expected_energy = (expected_kinetic + expected_potential) * area;
+        
+        let total_energy = solver.compute_total_energy();
+        
+        // Should be close (other cells have zero energy)
+        assert!((total_energy - expected_energy).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_circular_wave_symmetry() {
+        let mesh = TriangularMesh::new_rectangular(11, 11, 10.0, 10.0, TopographyType::Flat);
+        let mut solver = ShallowWaterSolver::new(mesh, 0.45, FrictionLaw::None);
+        
+        let center = (5.0, 5.0);
+        solver.set_circular_wave(center, 2.0, 0.2);
+        
+        // Check that water depth decreases with distance from center
+        let mut depths_by_radius: Vec<(f64, f64)> = solver.mesh.triangles.iter().enumerate()
+            .map(|(i, tri)| {
+                let r = ((tri.centroid.0 - center.0).powi(2) + 
+                         (tri.centroid.1 - center.1).powi(2)).sqrt();
+                (r, solver.state.h[i])
+            })
+            .collect();
+        
+        depths_by_radius.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+        
+        // Check that depths are generally decreasing or constant with radius
+        // (allowing for some mesh discretization effects)
+        let avg_depth_near_center = depths_by_radius.iter()
+            .take(10)
+            .map(|(_, h)| h)
+            .sum::<f64>() / 10.0;
+        
+        let avg_depth_far = depths_by_radius.iter()
+            .rev()
+            .take(10)
+            .map(|(_, h)| h)
+            .sum::<f64>() / 10.0;
+        
+        // Center should have higher average depth than far edges
+        assert!(avg_depth_near_center >= avg_depth_far,
+                "Center should have higher or equal depth: {} vs {}", 
+                avg_depth_near_center, avg_depth_far);
+    }
+}

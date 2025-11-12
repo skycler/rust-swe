@@ -21,10 +21,10 @@ This single file contains everything you need:
 
 📖 **[README.md](README.md)** - Project overview and quick start
 
-## Test Script
+## Example Script
 
-### Test Suite
-- **run_tests.sh** - Comprehensive test script with 12 scenarios + parallelization benchmark
+### Example Suite
+- **run_examples.sh** - Comprehensive example script with 12 scenarios + parallelization benchmark
    - Basic flow patterns
    - Friction effects (Manning, Chezy)
    - Topography interactions

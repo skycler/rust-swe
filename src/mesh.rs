@@ -26,6 +26,7 @@ pub struct Edge {
     pub right_triangle: Option<usize>, // None for boundary edges
 }
 
+#[derive(Clone)]
 pub struct TriangularMesh {
     pub nodes: Vec<Node>,
     pub triangles: Vec<Triangle>,
@@ -224,5 +225,158 @@ impl TriangularMesh {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mesh_creation_basic() {
+        let mesh = TriangularMesh::new_rectangular(3, 3, 1.0, 1.0, TopographyType::Flat);
+        
+        // Should have 3x3 = 9 nodes
+        assert_eq!(mesh.nodes.len(), 9);
+        
+        // Should have 2 triangles per cell = 2*(3-1)*(3-1) = 8 triangles
+        assert_eq!(mesh.triangles.len(), 8);
+        
+        // All nodes should have z = 0 for flat topography
+        for node in &mesh.nodes {
+            assert_eq!(node.z, 0.0);
+        }
+    }
+
+    #[test]
+    fn test_mesh_dimensions() {
+        let width = 10.0;
+        let height = 5.0;
+        let mesh = TriangularMesh::new_rectangular(11, 6, width, height, TopographyType::Flat);
+        
+        // Check boundary nodes
+        assert_eq!(mesh.nodes[0].x, 0.0);
+        assert_eq!(mesh.nodes[0].y, 0.0);
+        
+        // Check last node
+        let last_node = mesh.nodes.last().unwrap();
+        assert!((last_node.x - width).abs() < 1e-10);
+        assert!((last_node.y - height).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_triangle_area_positive() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        
+        // All triangles should have positive area
+        for tri in &mesh.triangles {
+            assert!(tri.area > 0.0, "Triangle area should be positive");
+        }
+    }
+
+    #[test]
+    fn test_topography_flat() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        
+        for tri in &mesh.triangles {
+            assert_eq!(tri.z_bed, 0.0);
+        }
+    }
+
+    #[test]
+    fn test_topography_slope() {
+        let gradient_x = 0.1;
+        let gradient_y = 0.05;
+        let mesh = TriangularMesh::new_rectangular(
+            5, 5, 10.0, 10.0,
+            TopographyType::Slope { gradient_x, gradient_y }
+        );
+        
+        // Check that bed elevation increases with x and y
+        let node_00 = &mesh.nodes[0]; // (0, 0)
+        let node_max = mesh.nodes.last().unwrap(); // (10, 10)
+        
+        assert!(node_max.z > node_00.z);
+        
+        // Check approximate slope
+        let expected_z = gradient_x * node_max.x + gradient_y * node_max.y;
+        assert!((node_max.z - expected_z).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_topography_gaussian() {
+        let center = (5.0, 5.0);
+        let amplitude = 2.0;
+        let width = 2.0;
+        let mesh = TriangularMesh::new_rectangular(
+            11, 11, 10.0, 10.0,
+            TopographyType::Gaussian { center, amplitude, width }
+        );
+        
+        // Find node closest to center
+        let center_node = mesh.nodes.iter()
+            .min_by(|a, b| {
+                let dist_a = ((a.x - center.0).powi(2) + (a.y - center.1).powi(2)).sqrt();
+                let dist_b = ((b.x - center.0).powi(2) + (b.y - center.1).powi(2)).sqrt();
+                dist_a.partial_cmp(&dist_b).unwrap()
+            })
+            .unwrap();
+        
+        // Center should have highest elevation (close to amplitude)
+        assert!(center_node.z > 0.8 * amplitude, "Center should be near peak amplitude");
+        
+        // Check Gaussian decay
+        for node in &mesh.nodes {
+            let r2 = (node.x - center.0).powi(2) + (node.y - center.1).powi(2);
+            let expected = amplitude * (-r2 / width.powi(2)).exp();
+            assert!((node.z - expected).abs() < 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_edges_generation() {
+        let mesh = TriangularMesh::new_rectangular(4, 4, 10.0, 10.0, TopographyType::Flat);
+        
+        // Should have edges (Euler formula for planar graphs)
+        assert!(mesh.edges.len() > 0);
+        
+        // All edges should have positive length
+        for edge in &mesh.edges {
+            assert!(edge.length > 0.0);
+        }
+        
+        // Normal vectors should be unit vectors
+        for edge in &mesh.edges {
+            let norm = (edge.normal.0.powi(2) + edge.normal.1.powi(2)).sqrt();
+            assert!((norm - 1.0).abs() < 1e-10, "Normal should be unit vector");
+        }
+    }
+
+    #[test]
+    fn test_neighbor_connectivity() {
+        let mesh = TriangularMesh::new_rectangular(4, 4, 10.0, 10.0, TopographyType::Flat);
+        
+        // Check that neighbor references are valid
+        for tri in &mesh.triangles {
+            for neighbor_id in &tri.neighbors {
+                if let Some(id) = neighbor_id {
+                    assert!(*id < mesh.triangles.len(), "Neighbor ID should be valid");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_mesh_consistency() {
+        let mesh = TriangularMesh::new_rectangular(5, 5, 10.0, 10.0, TopographyType::Flat);
+        
+        // Total number of nodes should match grid size
+        let nx = 5;
+        let ny = 5;
+        assert_eq!(mesh.nodes.len(), nx * ny);
+        
+        // Number of triangles = 2 * (nx-1) * (ny-1)
+        let expected_triangles = 2 * (nx - 1) * (ny - 1);
+        assert_eq!(mesh.triangles.len(), expected_triangles);
     }
 }

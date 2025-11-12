@@ -170,7 +170,7 @@ Mass conservation error: **0.00000000%** (machine precision)
 ## Documentation & Guides
 
 - **[DOCUMENTATION.md](DOCUMENTATION.md)** - Complete guide (all topics in one file)
-- **[run_tests.sh](run_tests.sh)** - Comprehensive test suite (12 scenarios)
+- **[run_examples.sh](run_examples.sh)** - Comprehensive example suite (12 scenarios)
 
 ## Code Structure
 
