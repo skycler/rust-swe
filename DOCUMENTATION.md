@@ -170,6 +170,25 @@ cargo run --release -- --help
 cargo run --release -- --nx 20 --ny 20 --final-time 1.0
 ```
 
+### Development & CI
+
+The project includes a comprehensive **GitHub Actions CI pipeline** that automatically:
+- Runs linting (`clippy`) and formatting (`rustfmt`) checks
+- Executes all 22 unit tests
+- Builds debug and release binaries
+- Generates code coverage reports
+- Publishes all results as artifacts
+
+See **[.github/CI.md](.github/CI.md)** for full CI documentation.
+
+**Run CI checks locally:**
+```bash
+cargo fmt -- --check              # Format check
+cargo clippy -- -D warnings       # Lint check
+cargo test                        # Run all tests
+cargo build --release             # Build optimized
+```
+
 ---
 
 ## Quick Start
@@ -1724,7 +1743,18 @@ Mass conservation error should be < 10⁻¹² (machine precision).
 
 ### Continuous Integration
 
-For CI/CD pipelines:
+The project includes a comprehensive GitHub Actions CI pipeline (`.github/workflows/ci.yml`) that automatically:
+
+1. **Linting** - Runs `cargo clippy` with strict warnings
+2. **Formatting** - Validates code formatting with `rustfmt`
+3. **Unit Tests** - Executes all 22 tests and generates reports
+4. **Builds** - Compiles both debug and release binaries
+5. **Coverage** - Generates code coverage reports with `tarpaulin`
+6. **Publishing** - Uploads all artifacts and creates summary reports
+
+The pipeline runs on all pushes and pull requests to `main` and `develop` branches, using containerized Rust 1.75 environments.
+
+**Manual CI commands:**
 
 ```bash
 # Run tests with JSON output

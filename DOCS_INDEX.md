@@ -21,6 +21,14 @@ This single file contains everything you need:
 
 📖 **[README.md](README.md)** - Project overview and quick start
 
+## CI/CD Pipeline
+
+🔧 **[.github/CI.md](.github/CI.md)** - GitHub Actions pipeline documentation
+- Automated linting, testing, and builds
+- Code coverage analysis
+- Artifact publishing
+- Pull request automation
+
 ## Example Script
 
 ### Example Suite

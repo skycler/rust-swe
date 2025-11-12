@@ -1,5 +1,7 @@
 # Shallow Water Equations Solver
 
+[![CI Pipeline](https://github.com/skycler/rust-swe/actions/workflows/ci.yml/badge.svg)](https://github.com/skycler/rust-swe/actions/workflows/ci.yml)
+
 A high-performance Rust implementation of a 2D shallow water equations solver using the finite volume method on triangular meshes.
 
 **Version 1.0** - Now with 3D topography and bottom friction support!
