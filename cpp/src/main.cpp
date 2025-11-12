@@ -31,24 +31,21 @@ struct CommandLineArgs {
         std::cout << "  Shallow Water Equations Solver (2D Triangular Mesh)\n";
         std::cout << "═══════════════════════════════════════════════════════════\n\n";
 
-#ifdef USE_OPENCL
-        if (use_gpu && GpuSolver::is_available()) {
-            std::cout << "GPU Acceleration: ENABLED (OpenCL)\n";
-        } else if (GpuSolver::is_available()) {
-            std::cout << "GPU Acceleration: Available but not enabled (use --use-gpu)\n";
+#ifdef USE_KOKKOS
+        if (GpuSolver::is_available()) {
+            std::cout << "Kokkos Backend: " << GpuSolver::get_device_name();
+            if (use_gpu) {
+                std::cout << " (ENABLED)\n";
+            } else {
+                std::cout << " (available, use --use-gpu to enable)\n";
+            }
         }
 #else
         if (use_gpu) {
-            std::cout << "WARNING: GPU requested but not compiled with OpenCL support\n";
-            std::cout << "         Build with -DENABLE_GPU=ON\n";
+            std::cout << "WARNING: GPU requested but not compiled with Kokkos support\n";
+            std::cout << "         Build with Kokkos enabled\n";
             std::cout << "Falling back to CPU mode.\n";
         }
-#endif
-
-#ifdef USE_OPENMP
-        std::cout << "OpenMP: ENABLED\n";
-#else
-        std::cout << "OpenMP: DISABLED\n";
 #endif
 
         std::cout << "\nMesh Configuration:\n";

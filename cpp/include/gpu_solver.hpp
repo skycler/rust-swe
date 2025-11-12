@@ -4,15 +4,13 @@
 #include <vector>
 #include <memory>
 
-#ifdef USE_OPENCL
-#define CL_HPP_TARGET_OPENCL_VERSION 120
-#define CL_HPP_MINIMUM_OPENCL_VERSION 120
-#include <CL/opencl.hpp>
+#ifdef USE_KOKKOS
+#include <Kokkos_Core.hpp>
 #endif
 
 namespace swe {
 
-#ifdef USE_OPENCL
+#ifdef USE_KOKKOS
 
 class GpuSolver {
 public:
@@ -22,7 +20,7 @@ public:
     // Upload state to GPU
     void upload_state(const std::vector<State>& state);
     
-    // Compute fluxes on GPU
+    // Compute fluxes on GPU/parallel device
     void compute_fluxes(
         const std::vector<Edge>& edges,
         const std::vector<Triangle>& triangles,
@@ -37,39 +35,34 @@ public:
     static bool is_available();
     
     // Get device info
-    std::string get_device_name() const;
+    static std::string get_device_name();
 
 private:
     size_t num_triangles_;
     Real gravity_;
     
-    cl::Context context_;
-    cl::Device device_;
-    cl::CommandQueue queue_;
-    cl::Program program_;
-    cl::Kernel flux_kernel_;
+    // Kokkos Views for device data
+    using StateView = Kokkos::View<State*>;
+    using EdgeView = Kokkos::View<Edge*>;
+    using TriangleView = Kokkos::View<Triangle*>;
     
-    cl::Buffer state_buffer_;
-    cl::Buffer edge_buffer_;
-    cl::Buffer triangle_buffer_;
-    cl::Buffer residual_buffer_;
-    
-    void initialize_opencl();
-    void create_buffers();
-    void compile_kernels();
+    StateView state_device_;
+    StateView residual_device_;
+    EdgeView edges_device_;
+    TriangleView triangles_device_;
 };
 
 #else
 
-// Dummy implementation when OpenCL is not available
+// Dummy implementation when Kokkos is not available
 class GpuSolver {
 public:
     GpuSolver(size_t, Real) {
-        throw std::runtime_error("GPU support not compiled. Build with -DENABLE_GPU=ON");
+        throw std::runtime_error("GPU support not compiled. Build with Kokkos enabled");
     }
     
     static bool is_available() { return false; }
-    std::string get_device_name() const { return "N/A"; }
+    static std::string get_device_name() { return "N/A"; }
     void upload_state(const std::vector<State>&) {}
     void compute_fluxes(const std::vector<Edge>&, const std::vector<Triangle>&, Real, std::vector<State>&) {}
     void download_state(std::vector<State>&) {}

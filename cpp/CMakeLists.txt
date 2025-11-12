@@ -12,8 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Options
 option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
-option(ENABLE_GPU "Enable GPU acceleration with OpenCL" OFF)
-option(ENABLE_OPENMP "Enable OpenMP parallelization" ON)
+option(ENABLE_GPU "Enable GPU acceleration with Kokkos" OFF)
 
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -39,18 +38,12 @@ endif()
 # Find dependencies
 find_package(Threads REQUIRED)
 
-# OpenMP support
-if(ENABLE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_CXX_FOUND)
-        add_compile_definitions(USE_OPENMP)
-    endif()
-endif()
-
-# OpenCL support
-if(ENABLE_GPU)
-    find_package(OpenCL REQUIRED)
-    add_compile_definitions(USE_OPENCL)
+# Kokkos support - handles CPU and GPU backends
+find_package(Kokkos QUIET)
+if(Kokkos_FOUND)
+    add_compile_definitions(USE_KOKKOS)
+else()
+    message(STATUS "Kokkos not found - building CPU-only version")
 endif()
 
 # Include directories
@@ -64,7 +57,7 @@ set(SOURCES
     src/boundary.cpp
 )
 
-if(ENABLE_GPU)
+if(Kokkos_FOUND)
     list(APPEND SOURCES src/gpu_solver.cpp)
 endif()
 
@@ -72,12 +65,8 @@ endif()
 add_library(swe_lib STATIC ${SOURCES})
 target_link_libraries(swe_lib PUBLIC Threads::Threads)
 
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(swe_lib PUBLIC OpenMP::OpenMP_CXX)
-endif()
-
-if(ENABLE_GPU)
-    target_link_libraries(swe_lib PUBLIC OpenCL::OpenCL)
+if(Kokkos_FOUND)
+    target_link_libraries(swe_lib PUBLIC Kokkos::kokkos)
 endif()
 
 # Main executable
