@@ -1,6 +1,9 @@
 mod mesh;
 mod solver;
 
+#[cfg(feature = "gpu")]
+mod gpu_solver;
+
 use clap::{Parser, ValueEnum};
 use mesh::{TopographyType, TriangularMesh};
 use solver::{FrictionLaw, ShallowWaterSolver};
@@ -81,6 +84,10 @@ struct Args {
     #[arg(long, default_value_t = 50.0)]
     chezy_c: f64,
 
+    /// Use GPU acceleration (requires 'gpu' feature)
+    #[arg(long, default_value_t = false)]
+    use_gpu: bool,
+
     /// Output file prefix
     #[arg(short = 'p', long, default_value = "output")]
     output_prefix: String,
@@ -92,6 +99,22 @@ fn main() {
     println!("═══════════════════════════════════════════════════════════");
     println!("  Shallow Water Equations Solver (2D Triangular Mesh)");
     println!("═══════════════════════════════════════════════════════════");
+    println!();
+    
+    // GPU availability check
+    #[cfg(feature = "gpu")]
+    if args.use_gpu {
+        println!("GPU Acceleration: ENABLED (WebGPU)");
+    } else {
+        println!("GPU Acceleration: Available but not enabled (use --use-gpu)");
+    }
+    
+    #[cfg(not(feature = "gpu"))]
+    if args.use_gpu {
+        println!("WARNING: GPU requested but not compiled. Build with --features gpu");
+        println!("Falling back to CPU mode.");
+    }
+    
     println!();
     println!("Mesh Configuration:");
     println!(
