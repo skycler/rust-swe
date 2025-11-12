@@ -100,7 +100,7 @@ fn main() {
     println!("  Shallow Water Equations Solver (2D Triangular Mesh)");
     println!("═══════════════════════════════════════════════════════════");
     println!();
-    
+
     // GPU availability check
     #[cfg(feature = "gpu")]
     if args.use_gpu {
@@ -108,13 +108,13 @@ fn main() {
     } else {
         println!("GPU Acceleration: Available but not enabled (use --use-gpu)");
     }
-    
+
     #[cfg(not(feature = "gpu"))]
     if args.use_gpu {
         println!("WARNING: GPU requested but not compiled. Build with --features gpu");
         println!("Falling back to CPU mode.");
     }
-    
+
     println!();
     println!("Mesh Configuration:");
     println!(
