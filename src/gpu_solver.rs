@@ -128,7 +128,7 @@ impl GpuSolver {
 
             compute_pass.set_pipeline(&self.compute_pipeline);
             let workgroup_size = 64;
-            let num_workgroups = (self.n_triangles + workgroup_size - 1) / workgroup_size;
+            let num_workgroups = self.n_triangles.div_ceil(workgroup_size);
             compute_pass.dispatch_workgroups(num_workgroups as u32, 1, 1);
         }
 
