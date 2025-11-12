@@ -371,7 +371,7 @@ mod tests {
         let mesh = TriangularMesh::new_rectangular(4, 4, 10.0, 10.0, TopographyType::Flat);
 
         // Should have edges (Euler formula for planar graphs)
-        assert!(mesh.edges.len() > 0);
+        assert!(!mesh.edges.is_empty());
 
         // All edges should have positive length
         for edge in &mesh.edges {
@@ -391,10 +391,8 @@ mod tests {
 
         // Check that neighbor references are valid
         for tri in &mesh.triangles {
-            for neighbor_id in &tri.neighbors {
-                if let Some(id) = neighbor_id {
-                    assert!(*id < mesh.triangles.len(), "Neighbor ID should be valid");
-                }
+            for id in tri.neighbors.iter().flatten() {
+                assert!(*id < mesh.triangles.len(), "Neighbor ID should be valid");
             }
         }
     }

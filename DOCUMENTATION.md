@@ -141,7 +141,7 @@ $$\mathbf{S}_{\text{friction}} = -ghS_f\frac{\mathbf{v}}{|\mathbf{v}|} = -gh\fra
 
 ### Prerequisites
 
-- **Rust 1.80 or later** (tested with 1.81+) - Install from [rustup.rs](https://rustup.rs)
+- **Rust 1.80 or later** (CI uses 1.83+, tested with 1.91+) - Install from [rustup.rs](https://rustup.rs)
 - **Git** (optional) - For version control
 - **ParaView** (optional) - For visualization
 
@@ -1752,7 +1752,7 @@ The project includes a comprehensive GitHub Actions CI pipeline (`.github/workfl
 5. **Coverage** - Generates code coverage reports with `tarpaulin`
 6. **Publishing** - Uploads all artifacts and creates summary reports
 
-The pipeline runs on all pushes and pull requests to `main` and `develop` branches, using containerized Rust 1.75 environments.
+The pipeline runs on all pushes and pull requests to `main` and `develop` branches, using containerized Rust 1.83 environments.
 
 **Manual CI commands:**
 

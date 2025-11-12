@@ -259,7 +259,7 @@ fn save_state(solver: &ShallowWaterSolver, index: usize, prefix: &str) {
                 writeln!(file, "{} {} 0.0", node.x, node.y).unwrap();
             }
 
-            writeln!(file, "").unwrap();
+            writeln!(file).unwrap();
             writeln!(
                 file,
                 "CELLS {} {}",
@@ -272,13 +272,13 @@ fn save_state(solver: &ShallowWaterSolver, index: usize, prefix: &str) {
                 writeln!(file, "3 {} {} {}", tri.nodes[0], tri.nodes[1], tri.nodes[2]).unwrap();
             }
 
-            writeln!(file, "").unwrap();
+            writeln!(file).unwrap();
             writeln!(file, "CELL_TYPES {}", solver.mesh.triangles.len()).unwrap();
             for _ in 0..solver.mesh.triangles.len() {
                 writeln!(file, "5").unwrap(); // Triangle type
             }
 
-            writeln!(file, "").unwrap();
+            writeln!(file).unwrap();
             writeln!(file, "CELL_DATA {}", solver.mesh.triangles.len()).unwrap();
 
             writeln!(file, "SCALARS height float 1").unwrap();
