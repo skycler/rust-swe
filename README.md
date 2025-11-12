@@ -143,10 +143,9 @@ This solver is designed for:
 
 The solver implements the 2D shallow water equations with source terms:
 
-```
-∂h/∂t + ∇·(hu) = 0
-∂(hu)/∂t + ∇·(hu⊗u + ½gh²I) = -gh∇z_b - ghS_f·u/|u|
-```
+$$\frac{\partial h}{\partial t} + \nabla \cdot (h\mathbf{u}) = 0$$
+
+$$\frac{\partial (h\mathbf{u})}{\partial t} + \nabla \cdot (h\mathbf{u} \otimes \mathbf{u} + \frac{1}{2}gh^2\mathbf{I}) = -gh\nabla z_b - ghS_f\frac{\mathbf{u}}{|\mathbf{u}|}$$
 
 **Features:**
 - Finite Volume Method (mass conservative)

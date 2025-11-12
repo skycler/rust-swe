@@ -87,46 +87,43 @@ This solver implements the 2D shallow water equations (Saint-Venant equations) o
 The solver implements the 2D shallow water equations with source terms:
 
 **Mass Conservation:**
-```
-∂h/∂t + ∂(hu)/∂x + ∂(hv)/∂y = 0
-```
+
+$$\frac{\partial h}{\partial t} + \frac{\partial (hu)}{\partial x} + \frac{\partial (hv)}{\partial y} = 0$$
 
 **Momentum Conservation (x-direction):**
-```
-∂(hu)/∂t + ∂(hu² + gh²/2)/∂x + ∂(huv)/∂y = -gh∂z_b/∂x - ghS_fx
-```
+
+$$\frac{\partial (hu)}{\partial t} + \frac{\partial}{\partial x}\left(hu^2 + \frac{gh^2}{2}\right) + \frac{\partial (huv)}{\partial y} = -gh\frac{\partial z_b}{\partial x} - ghS_{fx}$$
 
 **Momentum Conservation (y-direction):**
-```
-∂(hv)/∂t + ∂(huv)/∂x + ∂(hv² + gh²/2)/∂y = -gh∂z_b/∂y - ghS_fy
-```
+
+$$\frac{\partial (hv)}{\partial t} + \frac{\partial (huv)}{\partial x} + \frac{\partial}{\partial y}\left(hv^2 + \frac{gh^2}{2}\right) = -gh\frac{\partial z_b}{\partial y} - ghS_{fy}$$
 
 **Variables:**
-- `h` = water height/depth (m)
-- `u, v` = velocity components (m/s)
-- `g` = gravitational acceleration = 9.81 m/s²
-- `z_b` = bed elevation (m)
-- `S_f` = friction slope (dimensionless)
+- $h$ = water height/depth (m)
+- $u, v$ = velocity components (m/s)
+- $g$ = gravitational acceleration = 9.81 m/s²
+- $z_b$ = bed elevation (m)
+- $S_f$ = friction slope (dimensionless)
 
 ### Source Terms
 
 **Topographic Source Term:**
-```
-S_topo = -gh∇z_b
-```
+
+$$\mathbf{S}_{\text{topo}} = -gh\nabla z_b$$
+
 Represents the gravitational force due to bed slope.
 
 **Friction Source Term (Manning):**
-```
-S_f = n²|v|²/h^(4/3)
-S_friction = -ghS_f(u/|v|, v/|v|)
-```
+
+$$S_f = \frac{n^2|\mathbf{v}|^2}{h^{4/3}}$$
+
+$$\mathbf{S}_{\text{friction}} = -ghS_f\frac{\mathbf{v}}{|\mathbf{v}|} = -gh\frac{n^2|\mathbf{v}|^2}{h^{4/3}}\frac{\mathbf{v}}{|\mathbf{v}|}$$
 
 **Friction Source Term (Chezy):**
-```
-S_f = |v|²/(C²h)
-S_friction = -ghS_f(u/|v|, v/|v|)
-```
+
+$$S_f = \frac{|\mathbf{v}|^2}{C^2h}$$
+
+$$\mathbf{S}_{\text{friction}} = -ghS_f\frac{\mathbf{v}}{|\mathbf{v}|} = -gh\frac{|\mathbf{v}|^2}{C^2h}\frac{\mathbf{v}}{|\mathbf{v}|}$$
 
 ### Numerical Method
 
@@ -377,14 +374,14 @@ The mesh nodes support z-coordinates, enabling simulation of flow over non-flat 
 - Width: domain_width/4
 
 **Formula:**
-```
-z(x,y) = A * exp(-r²/w²)
-where r² = (x-x_c)² + (y-y_c)²
-```
+
+$$z(x,y) = A \exp\left(-\frac{r^2}{w^2}\right)$$
+
+where $r^2 = (x-x_c)^2 + (y-y_c)^2$
 
 **Physical Effects:**
 - Wave refraction around obstacle
-- Wave speed varies with depth: c = √(gh)
+- Wave speed varies with depth: $c = \sqrt{gh}$
 - Waves slow over shallow areas (hill)
 - Reflection and diffraction patterns
 
@@ -408,11 +405,13 @@ where r² = (x-x_c)² + (y-y_c)²
 - Channel centered at y = domain_height/2
 
 **Formula:**
-```
-z(y) = -depth * (1 - (2*Δy/width)²)  if |Δy| < width/2
-z(y) = 0                              otherwise
-where Δy = |y - y_center|
-```
+
+$$z(y) = \begin{cases}
+-d \left(1 - \left(\frac{2\Delta y}{w}\right)^2\right) & \text{if } |\Delta y| < w/2 \\
+0 & \text{otherwise}
+\end{cases}$$
+
+where $\Delta y = |y - y_{\text{center}}|$, $d$ = depth, $w$ = width
 
 **Physical Effects:**
 - Flow concentrates in channel
@@ -1286,19 +1285,17 @@ rayon = "1.8"
 **Theory:** Finite volume method ensures exact conservation.
 
 **Formula:**
-```
-M(t) = Σ h_i * A_i = constant
-```
+
+$$M(t) = \sum_i h_i \cdot A_i = \text{constant}$$
 
 **Implementation:**
 - Conservative flux formulation
 - No artificial sources/sinks
-- Numerical error: machine precision (~10⁻¹⁶)
+- Numerical error: machine precision (~$10^{-16}$)
 
 **Verification:**
-```
-Mass conservation error = |M(t) - M(0)| / M(0) * 100%
-```
+
+$$\text{Mass error} = \frac{|M(t) - M(0)|}{M(0)} \times 100\%$$
 
 **Typical Results:** 0.00000000% (exactly zero to 8 decimal places)
 
@@ -1314,28 +1311,24 @@ Mass conservation error = |M(t) - M(0)| / M(0) * 100%
 #### Energy
 
 **Total Energy:**
-```
-E = Σ (½ h u² + ½ h v² + ½ g h²) * A_i
-```
+
+$$E = \sum_i \left(\frac{1}{2}h u^2 + \frac{1}{2}h v^2 + \frac{1}{2}g h^2\right) A_i$$
 
 **Without friction:** Approximately conserved (small numerical dissipation)
 
 **With friction:** Decreases over time (energy → heat)
 
 **Dissipation Rate:**
-```
-dE/dt = -Σ g h S_f |v| * A_i < 0
-```
+
+$$\frac{dE}{dt} = -\sum_i g h S_f |\mathbf{v}| \cdot A_i < 0$$
 
 ### Well-Balanced Scheme
 
 **Property:** Preserves steady states exactly
 
 **"Lake at Rest" Equilibrium:**
-```
-h + z_b = constant
-u = v = 0
-```
+
+$$h + z_b = \text{constant}, \quad u = v = 0$$
 
 **Implementation:**
 - Careful treatment of pressure gradient
@@ -1351,19 +1344,17 @@ Set h + z_b = 1.0 everywhere, u=v=0
 #### CFL Condition
 
 **Formula:**
-```
-CFL = (|u| + c) * dt / dx ≤ CFL_max
-```
+
+$$\text{CFL} = \frac{(|\mathbf{u}| + c) \Delta t}{\Delta x} \leq \text{CFL}_{\max}$$
 
 **Where:**
-- c = √(gh) = wave speed
-- dt = time step
-- dx = element size
+- $c = \sqrt{gh}$ = wave speed (shallow water wave celerity)
+- $\Delta t$ = time step
+- $\Delta x$ = element size
 
 **Adaptive Time Stepping:**
-```rust
-dt = CFL * min(dx) / max(|u| + c)
-```
+
+$$\Delta t = \frac{\text{CFL} \cdot \min(\Delta x)}{\max(|\mathbf{u}| + c)}$$
 
 **Typical CFL Values:**
 - 0.3-0.4: Very stable, conservative
@@ -1376,10 +1367,12 @@ dt = CFL * min(dx) / max(|u| + c)
 **Property:** Inherently stable, dissipative
 
 **Formula:**
-```
-F = ½(F_L + F_R) - ½λ(U_R - U_L)
-where λ = max(|u_L| + c_L, |u_R| + c_R)
-```
+
+$$\mathbf{F} = \frac{1}{2}(\mathbf{F}_L + \mathbf{F}_R) - \frac{1}{2}\lambda(\mathbf{U}_R - \mathbf{U}_L)$$
+
+where 
+
+$$\lambda = \max(|u_L| + c_L, |u_R| + c_R)$$
 
 **Advantages:**
 - Simple implementation
@@ -1394,11 +1387,11 @@ where λ = max(|u_L| + c_L, |u_R| + c_R)
 
 **Temporal Accuracy:**
 - Second-order Runge-Kutta (RK2)
-- Error: O(dt²)
+- Error: $\mathcal{O}(\Delta t^2)$
 
 **Spatial Accuracy:**
 - First-order (piecewise constant)
-- Error: O(dx)
+- Error: $\mathcal{O}(\Delta x)$
 - Can be extended to second-order with MUSCL reconstruction
 
 **Convergence:**
@@ -1433,9 +1426,8 @@ if h < 0.0 {
 - Preserve tangential component
 
 **Formula:**
-```
-u_boundary = u_interior - 2(u·n)n
-```
+
+$$\mathbf{u}_{\text{boundary}} = \mathbf{u}_{\text{interior}} - 2(\mathbf{u} \cdot \mathbf{n})\mathbf{n}$$
 
 **Effect:**
 - Waves reflect from boundaries
