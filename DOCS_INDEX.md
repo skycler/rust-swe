@@ -25,9 +25,9 @@ This single file contains everything you need:
 
 🔧 **[.github/CI.md](.github/CI.md)** - GitHub Actions pipeline documentation
 - Automated linting, testing, and builds
-- Code coverage analysis
 - Artifact publishing
 - Pull request automation
+- Auto-versioning after successful CI
 
 ## Example Script
 
