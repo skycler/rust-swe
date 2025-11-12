@@ -11,19 +11,19 @@ The CI pipeline (`.github/workflows/ci.yml`) runs automatically on:
 ## Pipeline Jobs
 
 ### 1. **Lint** (Clippy)
-- **Container**: `rust:1.75`
+- **Container**: `rust:1.81`
 - **Purpose**: Static analysis and code quality checks
 - **Command**: `cargo clippy --all-targets --all-features -- -D warnings`
 - **Output**: Clippy results uploaded as artifacts
 
 ### 2. **Format Check** (rustfmt)
-- **Container**: `rust:1.75`
+- **Container**: `rust:1.81`
 - **Purpose**: Ensures consistent code formatting
 - **Command**: `cargo fmt -- --check`
 - **Fails if**: Code is not properly formatted
 
 ### 3. **Unit Tests**
-- **Container**: `rust:1.75`
+- **Container**: `rust:1.81`
 - **Purpose**: Runs all 22 unit tests
 - **Commands**:
   - `cargo test --verbose -- --nocapture`
@@ -34,7 +34,7 @@ The CI pipeline (`.github/workflows/ci.yml`) runs automatically on:
   - Both uploaded as artifacts
 
 ### 4. **Build**
-- **Container**: `rust:1.75`
+- **Container**: `rust:1.81`
 - **Strategy**: Matrix build (debug + release)
 - **Purpose**: Verifies compilation in both modes
 - **Commands**:
@@ -45,7 +45,7 @@ The CI pipeline (`.github/workflows/ci.yml`) runs automatically on:
   - `shallow-water-solver-release`
 
 ### 5. **Coverage**
-- **Container**: `rust:1.75`
+- **Container**: `rust:1.81`
 - **Purpose**: Code coverage analysis
 - **Tool**: `cargo-tarpaulin`
 - **Command**: `cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml`
@@ -167,7 +167,7 @@ new-job:
   name: New Check
   runs-on: ubuntu-latest
   container:
-    image: rust:1.75
+    image: rust:1.81
   steps:
     - uses: actions/checkout@v4
     - run: cargo your-command

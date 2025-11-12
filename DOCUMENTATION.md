@@ -141,7 +141,7 @@ $$\mathbf{S}_{\text{friction}} = -ghS_f\frac{\mathbf{v}}{|\mathbf{v}|} = -gh\fra
 
 ### Prerequisites
 
-- **Rust 1.70 or later** - Install from [rustup.rs](https://rustup.rs)
+- **Rust 1.80 or later** (tested with 1.81+) - Install from [rustup.rs](https://rustup.rs)
 - **Git** (optional) - For version control
 - **ParaView** (optional) - For visualization
 
