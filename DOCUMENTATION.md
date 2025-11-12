@@ -176,7 +176,6 @@ The project includes a comprehensive **GitHub Actions CI pipeline** that automat
 - Runs linting (`clippy`) and formatting (`rustfmt`) checks
 - Executes all 22 unit tests
 - Builds debug and release binaries
-- Generates code coverage reports
 - Publishes all results as artifacts
 
 See **[.github/CI.md](.github/CI.md)** for full CI documentation.
@@ -1749,8 +1748,7 @@ The project includes a comprehensive GitHub Actions CI pipeline (`.github/workfl
 2. **Formatting** - Validates code formatting with `rustfmt`
 3. **Unit Tests** - Executes all 22 tests and generates reports
 4. **Builds** - Compiles both debug and release binaries
-5. **Coverage** - Generates code coverage reports with `tarpaulin`
-6. **Publishing** - Uploads all artifacts and creates summary reports
+5. **Publishing** - Uploads all artifacts and creates summary reports
 
 The pipeline runs on all pushes and pull requests to `main` and `develop` branches, using containerized Rust 1.83 environments.
 
@@ -1759,9 +1757,6 @@ The pipeline runs on all pushes and pull requests to `main` and `develop` branch
 ```bash
 # Run tests with JSON output
 cargo test --message-format=json
-
-# Run with coverage (requires cargo-tarpaulin)
-cargo tarpaulin --out Html
 
 # Run in release mode (slower but tests optimized code)
 cargo test --release

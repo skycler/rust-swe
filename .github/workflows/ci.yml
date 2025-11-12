@@ -233,34 +233,3 @@ jobs:
               repo: context.repo.repo,
               body: summary
             });
-
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
-    container:
-      image: rust:1.83
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install tarpaulin
-        run: cargo install cargo-tarpaulin
-
-      - name: Generate coverage
-        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./cobertura.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: cobertura.xml
-          retention-days: 30

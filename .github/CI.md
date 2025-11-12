@@ -44,16 +44,7 @@ The CI pipeline (`.github/workflows/ci.yml`) runs automatically on:
   - `shallow-water-solver-debug`
   - `shallow-water-solver-release`
 
-### 5. **Coverage**
-- **Container**: `rust:1.83`
-- **Purpose**: Code coverage analysis
-- **Tool**: `cargo-tarpaulin`
-- **Command**: `cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml`
-- **Output**: 
-  - Coverage report uploaded to Codecov
-  - XML report as artifact
-
-### 6. **Publish Results**
+### 5. **Publish Results**
 - **Container**: Ubuntu latest (no Rust needed)
 - **Purpose**: Aggregate and publish all results
 - **Actions**:
@@ -73,7 +64,6 @@ All jobs produce artifacts that are retained for 30 days:
 | `test-results` | JSON test results + Markdown report | Test |
 | `shallow-water-solver-debug` | Debug binary | Build |
 | `shallow-water-solver-release` | Release binary | Build |
-| `coverage-report` | Code coverage XML | Coverage |
 | `ci-summary` | Overall pipeline summary | Publish |
 
 ## Viewing Results
@@ -106,8 +96,7 @@ Typical run times:
 - **Format**: ~1 minute
 - **Test**: ~2-3 minutes
 - **Build** (per profile): ~3-5 minutes
-- **Coverage**: ~5-8 minutes
-- **Total**: ~15-20 minutes
+- **Total**: ~10-15 minutes
 
 ## Local Testing
 
@@ -126,10 +115,6 @@ cargo test --verbose
 # Build both profiles
 cargo build
 cargo build --release
-
-# Coverage (requires installation)
-cargo install cargo-tarpaulin
-cargo tarpaulin --verbose --all-features --workspace
 ```
 
 ## Troubleshooting
@@ -179,12 +164,9 @@ new-job:
 
 - All jobs run in isolated containers
 - No secrets are required for basic CI
-- Codecov integration uses public uploads (no token needed for public repos)
 - Artifacts are only accessible to repository members
 
 ## References
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Rust Docker Images](https://hub.docker.com/_/rust)
-- [cargo-tarpaulin](https://github.com/xd009642/tarpaulin)
-- [Codecov GitHub Action](https://github.com/codecov/codecov-action)
