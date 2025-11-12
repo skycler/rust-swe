@@ -2,6 +2,7 @@
 #include "mesh.hpp"
 #include "solver.hpp"
 #include "types.hpp"
+#include "gpu_solver.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -30,15 +31,16 @@ struct CommandLineArgs {
         std::cout << "  Shallow Water Equations Solver (2D Triangular Mesh)\n";
         std::cout << "═══════════════════════════════════════════════════════════\n\n";
 
-#ifdef USE_CUDA
-        if (use_gpu) {
-            std::cout << "GPU Acceleration: ENABLED (CUDA)\n";
-        } else {
-            std::cout << "GPU Acceleration: Available but not enabled\n";
+#ifdef USE_OPENCL
+        if (use_gpu && GpuSolver::is_available()) {
+            std::cout << "GPU Acceleration: ENABLED (OpenCL)\n";
+        } else if (GpuSolver::is_available()) {
+            std::cout << "GPU Acceleration: Available but not enabled (use --use-gpu)\n";
         }
 #else
         if (use_gpu) {
-            std::cout << "WARNING: GPU requested but not compiled with CUDA support\n";
+            std::cout << "WARNING: GPU requested but not compiled with OpenCL support\n";
+            std::cout << "         Build with -DENABLE_GPU=ON\n";
             std::cout << "Falling back to CPU mode.\n";
         }
 #endif

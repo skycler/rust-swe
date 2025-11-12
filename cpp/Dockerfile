@@ -5,7 +5,8 @@ FROM ubuntu:22.04
 # Install dependencies
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    build-essential cmake git ca-certificates libomp-dev && \
+    build-essential cmake git ca-certificates libomp-dev \
+    ocl-icd-opencl-dev opencl-headers clinfo && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 

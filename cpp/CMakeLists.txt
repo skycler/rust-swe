@@ -12,7 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Options
 option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
-option(ENABLE_GPU "Enable GPU acceleration with CUDA" OFF)
+option(ENABLE_GPU "Enable GPU acceleration with OpenCL" OFF)
 option(ENABLE_OPENMP "Enable OpenMP parallelization" ON)
 
 # Set output directories
@@ -47,11 +47,10 @@ if(ENABLE_OPENMP)
     endif()
 endif()
 
-# CUDA support
+# OpenCL support
 if(ENABLE_GPU)
-    enable_language(CUDA)
-    find_package(CUDAToolkit REQUIRED)
-    add_compile_definitions(USE_CUDA)
+    find_package(OpenCL REQUIRED)
+    add_compile_definitions(USE_OPENCL)
 endif()
 
 # Include directories
@@ -66,7 +65,7 @@ set(SOURCES
 )
 
 if(ENABLE_GPU)
-    list(APPEND SOURCES src/gpu_solver.cu)
+    list(APPEND SOURCES src/gpu_solver.cpp)
 endif()
 
 # Create library
@@ -78,7 +77,7 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 if(ENABLE_GPU)
-    target_link_libraries(swe_lib PUBLIC CUDA::cudart)
+    target_link_libraries(swe_lib PUBLIC OpenCL::OpenCL)
 endif()
 
 # Main executable
